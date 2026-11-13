@@ -94,18 +94,18 @@
       this.countdown(this.secs);
     }
     async tiles(it, stage) {
-      const opts = shuffle([it.target, it.target, it.target, ...it.distract, ...shuffle(it.distract).slice(0, 4)]);
+      const opts = shuffle([it.target, it.target, it.target, it.target, ...it.distract, ...shuffle(it.distract).slice(0, 3)]);
       const grid = el('div', 'g-tiles');
       opts.forEach(o => {
         const b = el('button', 'tile', o);
         b.onclick = () => { if (b.disabled) return; if (o === it.target) { this.hit(); b.classList.add('ok'); b.disabled = true; } else { this.miss(); b.classList.add('bad'); setTimeout(() => b.classList.remove('bad'), 300); }
-          if (grid.querySelectorAll('.ok').length === 3) this.finish(); };
+          if (grid.querySelectorAll('.ok').length === 4) this.finish(); };
         grid.append(b);
       });
       stage.append(grid); await SAY(it.say); this.countdown(this.secs);
     }
     search(it, stage) {
-      const n = 42, k = 7, pos = new Set(shuffle([...Array(n).keys()]).slice(0, k));
+      const n = 42, k = 5, pos = new Set(shuffle([...Array(n).keys()]).slice(0, k));
       const grid = el('div', 'g-search');
       for (let i = 0; i < n; i++) {
         const isT = pos.has(i); const b = el('button', 'cell', isT ? it.target : it.distract);
@@ -198,8 +198,8 @@
         box.innerHTML = ''; const inp = el('input', 'g-input'); inp.autocomplete = 'off'; inp.spellcheck = false;
         const ok = el('button', 'btn small', 'Check'); const again = el('button', 'btn ghost small', '🔊 Hear word');
         const word = it.words[w]; again.onclick = () => SAY(word, 0.7);
-        const submit = () => { const v = inp.value.trim().toLowerCase(); if (!v) return; if (v === word) this.hit(); else this.miss(); w++; show(); };
-        ok.onclick = submit; inp.onkeydown = e => { if (e.key === 'Enter') submit(); };
+        const submit = () => { const v = inp.value.trim().toLowerCase(); if (!v) return; if (v === word) this.cur.hits++; else this.cur.misses++; w++; show(); };
+        ok.onclick = submit; inp.onkeydown = e => { if (e.key === 'Enter') return submit(); if (e.key.length === 1 || e.key === 'Backspace') this.cur.clicks++; };
         const row = el('div', 'g-row'); row.append(inp, ok, again); box.append(row); inp.focus(); await SAY(word, 0.7);
       };
       stage.append(box); show(); this.countdown(this.secs * 4);

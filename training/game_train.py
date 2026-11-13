@@ -17,6 +17,7 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, AdaBo
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import roc_auc_score
 import xgboost as xgb
 from lightgbm import LGBMClassifier
@@ -33,7 +34,7 @@ def load(p, dev):
     d['Nativelang'] = yn(d['Nativelang']); d['Otherlang'] = yn(d['Otherlang']); d['y'] = yn(d['Dyslexia'])
     for c in RAW:
         d[c] = pd.to_numeric(d[c], errors='coerce')
-    d = d.dropna(subset=RAW + ['y']).reset_index(drop=True)
+    d = d.dropna(subset=['y']).reset_index(drop=True)
     E = pd.DataFrame([engineered(r) for r in d[RAW].to_dict('records')])
     X = pd.concat([d[RAW], E], axis=1); X['device_tablet'] = dev
     return X, d['y'].astype(int).values
@@ -55,7 +56,7 @@ def ens_margin(xg, et, X):
 
 def fit_ensemble(X, y):
     xg = xgb.XGBClassifier(**XGBP).fit(X, y)
-    et = ExtraTreesClassifier(500, min_samples_leaf=2, class_weight='balanced_subsample', n_jobs=2, random_state=0).fit(X, y)
+    et = make_pipeline(SimpleImputer(strategy='median'), ExtraTreesClassifier(500, min_samples_leaf=2, class_weight='balanced_subsample', n_jobs=2, random_state=0)).fit(X, y)
     return xg, et
 
 
@@ -77,21 +78,22 @@ class Proposed:
         return np.c_[1 - p, p]
 
 
-sc = lambda m: make_pipeline(StandardScaler(), m)
+sc = lambda m: make_pipeline(SimpleImputer(strategy='median'), StandardScaler(), m)
+im = lambda m: make_pipeline(SimpleImputer(strategy='median'), m)
 MODELS = {
     'XGBoost + Extra Trees ensemble (proposed)': lambda: Proposed(),
     'XGBoost': lambda: xgb.XGBClassifier(n_estimators=500, max_depth=4, learning_rate=0.05, subsample=0.8, colsample_bytree=0.8, n_jobs=2, verbosity=0),
     'LightGBM': lambda: LGBMClassifier(n_estimators=400, learning_rate=0.03, num_leaves=31, subsample=0.8, colsample_bytree=0.8, verbose=-1),
-    'Random Forest': lambda: RandomForestClassifier(500, min_samples_leaf=2, n_jobs=2, random_state=0),
-    'Extra Trees': lambda: ExtraTreesClassifier(500, min_samples_leaf=2, n_jobs=2, random_state=0),
-    'Gradient Boosting': lambda: GradientBoostingClassifier(n_estimators=300, max_depth=3, random_state=0),
-    'AdaBoost': lambda: AdaBoostClassifier(n_estimators=300, random_state=0),
+    'Random Forest': lambda: im(RandomForestClassifier(500, min_samples_leaf=2, n_jobs=2, random_state=0)),
+    'Extra Trees': lambda: im(ExtraTreesClassifier(500, min_samples_leaf=2, n_jobs=2, random_state=0)),
+    'Gradient Boosting': lambda: im(GradientBoostingClassifier(n_estimators=300, max_depth=3, random_state=0)),
+    'AdaBoost': lambda: im(AdaBoostClassifier(n_estimators=300, random_state=0)),
     'Support Vector Machine': lambda: sc(SVC(C=1.0, gamma='scale', probability=True, random_state=0)),
     'Logistic Regression': lambda: sc(LogisticRegression(C=0.1, max_iter=3000)),
     'Multilayer Perceptron': lambda: sc(MLPClassifier((64,), alpha=1e-2, max_iter=400, early_stopping=True, random_state=0)),
     'K-Nearest Neighbours': lambda: sc(KNeighborsClassifier(25)),
-    'Naive Bayes': lambda: GaussianNB(),
-    'Decision Tree': lambda: DecisionTreeClassifier(max_depth=6, min_samples_leaf=10, random_state=0),
+    'Naive Bayes': lambda: im(GaussianNB()),
+    'Decision Tree': lambda: im(DecisionTreeClassifier(max_depth=6, min_samples_leaf=10, random_state=0)),
 }
 only = sys.argv[3].split(',') if len(sys.argv) > 3 else None
 labp = f'{ROOT}/artifacts/lab_game.json'

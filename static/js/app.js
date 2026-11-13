@@ -159,14 +159,40 @@
       ${id ? `<p class="center"><a class="btn" href="#/child/${id}">Back to profile</a> <a class="btn ghost" href="#/child/${id}/report">View report</a></p>` : ''}`;
   }
   async function datasetView() {
-    view().innerHTML = `<header class="page-head"><div><h1>Dataset mode</h1><p class="muted">Score real children from the held-out test set of the Dytective dataset and compare with their actual diagnosis.</p></div></header>
+    view().innerHTML = `<header class="page-head"><div><h1>Dataset mode</h1><p class="muted">Run the trained models on real children from the research datasets that the models never saw during training, and compare with their actual diagnosis.</p></div></header>
+      <div class="tabs"><button class="tab on" data-t="game">Gamified test (Dytective)</button><button class="tab" data-t="eye">Eye tracking (ETDD70)</button></div>
       <section class="card row-actions"><button class="btn" data-k="1">Child with dyslexia</button><button class="btn" data-k="0">Child without dyslexia</button><button class="btn ghost" data-k="">Random child</button></section><section id="dsRes"></section>`;
+    let mode = 'game';
+    view().querySelectorAll('.tab').forEach(t => t.onclick = () => { mode = t.dataset.t; view().querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t)); $('#dsRes').innerHTML = ''; });
     view().querySelectorAll('[data-k]').forEach(b => b.onclick = async () => {
       busy(b, true, 'Loading…');
-      try { const r = await API.get('/api/game/sample' + (b.dataset.k !== '' ? `?dyslexia=${b.dataset.k}` : ''));
-        gameResult($('#dsRes'), r, null, r.truth); $('#dsRes').insertAdjacentHTML('afterbegin', `<p class="muted">Record #${r.record} · age ${r.age} · ${r.gender}</p>`); }
-      catch (err) { toast(err.message, true); } finally { busy(b, false); }
+      const q = b.dataset.k !== '' ? `?dyslexia=${b.dataset.k}` : '';
+      try {
+        if (mode === 'game') {
+          const r = await API.get('/api/game/sample' + q);
+          gameResult($('#dsRes'), r, null, r.truth); $('#dsRes').insertAdjacentHTML('afterbegin', `<p class="muted">Dytective record #${r.record} · age ${r.age} · ${r.gender}</p>`);
+        } else {
+          const r = await API.get('/api/eye/sample' + q);
+          const ok = (r.risk >= 0.5 ? 1 : 0) === r.y;
+          $('#dsRes').innerHTML = `<p class="muted">ETDD70 child #${r.sid} · recorded with a 250 Hz eye tracker</p>
+            <div class="grid-res"><section class="card center"><h2>Eye-movement risk</h2>${gauge(r.risk)}<p class="big-num">${pct(r.risk)}</p>
+            <p class="rdi-band ${r.risk >= 0.5 ? 'bad' : 'ok'}">${esc(r.label)}</p><p class="truth ${ok ? 'ok' : 'bad'}">Actual diagnosis in dataset: <b>${r.y ? 'Dyslexia' : 'No dyslexia'}</b></p>
+            <p class="muted small">${esc(r.model)}</p></section>
+            <section class="card"><h2>Reading summary</h2><div class="mini-stats">${r.tasks.map(t => `<div><b>${t.reading_s} s</b><span>${t.name}</span></div>`).join('')}<div><b>${r.tasks.reduce((a, t) => a + t.fix.length, 0)}</b><span>fixations</span></div></div>
+            <p class="muted small">Circles are fixations (bigger means longer); lines show the order the eyes moved.</p></section></div>
+            ${r.tasks.map((t, i) => `<section class="card"><h2>${t.name}</h2><canvas class="gaze-canvas" id="ds_${i}"></canvas></section>`).join('')}`;
+          r.tasks.forEach((t, i) => drawStim($(`#ds_${i}`), t));
+        }
+      } catch (err) { toast(err.message, true); } finally { busy(b, false); }
     });
+  }
+  function drawStim(canvas, t) {
+    const img = new Image(); img.onload = () => {
+      const W = canvas.clientWidth, s = W / t.w; canvas.width = W * devicePixelRatio; canvas.height = t.h * s * devicePixelRatio; canvas.style.height = (t.h * s) + 'px';
+      const g = canvas.getContext('2d'); g.setTransform(s * devicePixelRatio, 0, 0, s * devicePixelRatio, 0, 0); g.drawImage(img, 0, 0, t.w, t.h);
+      g.strokeStyle = 'rgba(31,122,107,.55)'; g.lineWidth = 1.6; g.beginPath(); t.fix.forEach((f, i) => i ? g.lineTo(f[0], f[1]) : g.moveTo(f[0], f[1])); g.stroke();
+      t.fix.forEach(f => { g.fillStyle = 'rgba(210,80,74,.38)'; g.beginPath(); g.arc(f[0], f[1], 4 + Math.min(f[2], 900) / 45, 0, 7); g.fill(); });
+    }; img.src = t.img;
   }
 
   // ---------------------------------------------------------------- module 2: handwriting

@@ -2,29 +2,38 @@
 training and the server so both build exactly the same model inputs."""
 import numpy as np
 
-GROUPS = {'letters': range(1, 5), 'syllables': range(5, 10), 'words': range(10, 14), 'visual': range(14, 18),
-          'pseudo': range(18, 22), 'spelling': range(22, 27), 'building': range(27, 30), 'memory': [30], 'dictation': [31, 32]}
+FAM = {"letter": range(1, 5), "syllable": range(5, 10), "word": range(10, 14), "pairs": range(14, 18),
+       "pseudo": range(18, 22), "spelling": range(22, 27), "building": range(27, 30), "memory": range(30, 33)}
 MEAS = ['Clicks', 'Hits', 'Misses', 'Score', 'Accuracy', 'Missrate']
 RAW = ['Gender', 'Nativelang', 'Otherlang', 'Age'] + [f'{m}{q}' for q in range(1, 33) for m in MEAS]
+NAN = float('nan')
+
+
+def _div(a, b):
+    return a / b if (b and b == b and a == a) else NAN
+
+
+def _sum(vals):
+    v = np.array(vals, float)
+    return float(np.nansum(v)) if np.isfinite(v).any() else NAN
 
 
 def engineered(row):
-    """41 summaries of a child's 32 exercises (row: dict-like with RAW keys, numeric)."""
+    """41 summaries of one child's 32 exercises (same definitions as the paper's module1_v2.py)."""
     f = {}
-    age = max(float(row['Age']), 1.0)
+    for m in ['Clicks', 'Hits', 'Misses']:
+        f[f'total_{m}'] = _sum([row[f'{m}{q}'] for q in range(1, 33)])
+        for k, qs in FAM.items():
+            f[f'{k}_{m}'] = _sum([row[f'{m}{q}'] for q in qs])
+    f['overall_accuracy'] = _div(f['total_Hits'], f['total_Clicks'])
+    f['overall_missrate'] = _div(f['total_Misses'], f['total_Clicks'])
+    for k in FAM:
+        f[f'{k}_accuracy'] = _div(f[f'{k}_Hits'], f[f'{k}_Clicks'])
     acc = np.array([row[f'Accuracy{q}'] for q in range(1, 33)], float)
-    mis = np.array([row[f'Missrate{q}'] for q in range(1, 33)], float)
-    hit = np.array([row[f'Hits{q}'] for q in range(1, 33)], float)
-    clk = np.array([row[f'Clicks{q}'] for q in range(1, 33)], float)
-    for g, qs in GROUPS.items():
-        ix = [q - 1 for q in qs]
-        f[f'{g}_acc'] = float(np.mean(acc[ix])); f[f'{g}_miss'] = float(np.mean(mis[ix])); f[f'{g}_hits'] = float(np.sum(hit[ix]))
-    f['total_clicks'] = float(clk.sum()); f['total_hits'] = float(hit.sum()); f['total_misses'] = float(np.sum([row[f'Misses{q}'] for q in range(1, 33)]))
-    f['overall_acc'] = f['total_hits'] / max(f['total_clicks'], 1.0); f['overall_miss'] = f['total_misses'] / max(f['total_clicks'], 1.0)
-    f['hits_per_age'] = f['total_hits'] / age; f['clicks_per_age'] = f['total_clicks'] / age
-    f['acc_sd'] = float(np.std(acc)); f['acc_min'] = float(np.min(acc)); f['miss_max'] = float(np.max(mis))
-    f['zero_click_items'] = float(np.sum(clk == 0)); f['auditory_minus_visual'] = f['letters_acc'] + f['syllables_acc'] - 2 * f['visual_acc']
-    f['phon_vs_lex'] = f['pseudo_acc'] - f['words_acc']; f['dictation_x_age'] = f['dictation_acc'] * age
+    f['n_skipped'] = float(sum(row[f'Clicks{q}'] == 0 for q in range(1, 33)))
+    f['n_low_accuracy'] = float((acc < 0.5).sum())
+    f['accuracy_spread'] = float(np.nanstd(acc, ddof=1))
+    f['hits_per_year_of_age'] = _div(f['total_Hits'], float(row['Age']))
     return f
 
 

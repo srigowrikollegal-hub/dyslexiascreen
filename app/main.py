@@ -215,6 +215,21 @@ def eye_analyze(body: EyeIn, user: User = Depends(current_user), db: Session = D
     return {"assessment_id": a.id, **res}
 
 
+_etdd = None
+
+
+@app.get("/api/eye/sample")
+def eye_sample(dyslexia: Optional[int] = None, user: User = Depends(current_user)):
+    global _etdd
+    import random
+    if _etdd is None:
+        _etdd = json.load(open(os.path.join(ART, "etdd_samples.json")))
+    kids = [k for k in _etdd["children"] if dyslexia is None or k["y"] == int(dyslexia)]
+    k = random.choice(kids)
+    return {**k, "label": "Atypical reading pattern" if k["risk"] >= 0.5 else "Typical reading pattern",
+            "model": "Heterogeneous ensemble (LR, SVM, KNN, MLP, Extra Trees)"}
+
+
 # ---------------------------------------------------------------- model lab
 @app.get("/api/lab")
 def lab():
