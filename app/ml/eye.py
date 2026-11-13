@@ -1,6 +1,7 @@
 """Eye-tracking module: turns raw webcam gaze samples into fixations,
 saccades, regressions and word-level reading measures, then scores them with
-the logistic model trained on ETDD70 (see training/eye_train.py)."""
+the logistic model trained on ETDD70 degraded to webcam quality
+(see training/eye_webcam_sim.py)."""
 import os
 import numpy as np, joblib
 
@@ -106,6 +107,7 @@ def analyse(tasks):
         if key not in tasks:
             continue
         m, summ, fx = task_measures(tasks[key]['samples'], tasks[key]['boxes'])
+        m['time_per_word'] = summ['reading_time_ms'] / max(summ['words'], 1)   # reading speed (ms per word)
         for k, v in m.items():
             feats[f'{tag}_{k}'] = v
         out[key] = {'measures': m, 'summary': summ,

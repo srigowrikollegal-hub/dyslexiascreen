@@ -7,7 +7,7 @@
   const fmtDate = s => new Date(s + (s.endsWith('Z') ? '' : 'Z')).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   let USER = null;
   const MODNAME = { game: 'Gamified test', handwriting: 'Handwriting', eye: 'Eye tracking' };
-  const MODICON = { game: '🎯', handwriting: '✍️', eye: '👁️' };
+  const MODICON = { game: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="4"/><path d="M8 10v4M6 12h4"/><circle cx="15.5" cy="11" r=".6"/><circle cx="17.5" cy="13" r=".6"/></svg>', handwriting: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 4.5l4 4L9 19H5v-4z"/><path d="M13.5 6.5l4 4"/></svg>', eye: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>' };
 
   function toast(msg, bad) {
     const t = $('#toast'); t.textContent = msg; t.className = 'toast show' + (bad ? ' bad' : '');
@@ -26,37 +26,62 @@
       <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="var(--line)" stroke-width="16" stroke-linecap="round"/>
       <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#gg)" stroke-width="16" stroke-linecap="round" stroke-dasharray="${251.3 * a} 999"/>
       <g transform="rotate(${ang} 100 100)"><line x1="100" y1="100" x2="100" y2="34" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/></g><circle cx="100" cy="100" r="7" fill="var(--ink)"/>
-      <text x="100" y="86" text-anchor="middle" class="gauge-num">${(a * 100).toFixed(0)}</text></svg>`;
+      </svg>`;
   }
 
   // ---------------------------------------------------------------- auth views
+  const BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7c-2-1.6-5-2.1-8.5-1.6v12.4c3.5-.5 6.5 0 8.5 1.6 2-1.6 5-2.1 8.5-1.6V5.4C17 4.9 14 5.4 12 7z"/><path d="M12 7v12.4"/><path d="M12 2.2v1.6M9.6 3l.6 1.1M14.4 3l-.6 1.1"/></svg>';
   function authView(mode) {
     document.body.classList.add('bare');
     view().innerHTML = `
-    <section class="auth">
-      <div class="auth-art">
-        <div class="brand big"><span class="logo">D</span> DyslexiaScreen</div>
-        <h1>Every child deserves to <em>love reading</em></h1>
-        <p>Early dyslexia risk screening through three short activities: a letter game, handwriting and a reading task with eye tracking, combined into one Reading Difficulty Index with clear reasons.</p>
-        <ul class="ticks"><li>12+ machine learning models compared in the Model Lab</li><li>Explanations for every result (SHAP, Grad-CAM, gaze maps)</li><li>Secure accounts, child profiles and printable reports</li></ul>
-      </div>
-      <form class="card auth-card" id="authForm">
-        <h2>${mode === 'login' ? 'Log in' : 'Create an account'}</h2>
-        ${mode === 'register' ? `<label>Full name<input name="name" required minlength="2" autocomplete="name"></label>
-        <label>Role<select name="role"><option value="teacher">Teacher</option><option value="parent">Parent</option><option value="clinician">Clinician</option></select></label>` : ''}
+    <section class="landing">
+      <div class="emblem">${BOOK}</div><div class="l-stem"></div>
+      <div class="l-content"><h1>DyslexiaScreen</h1>
+        <p>Early dyslexia risk screening with a reading game, handwriting analysis and webcam eye tracking, combined into one Reading Difficulty Index</p></div>
+      <div class="l-stem"></div>
+      <nav class="l-nav"><button data-open="login">Log in</button><button data-open="register">Create account</button><button data-open="about">About</button></nav>
+      <p class="l-foot">Capstone project · Information Science and Engineering · DSATM Bengaluru</p>
+    </section>
+    <div class="article-wrap" id="artWrap"><article class="article" id="art"></article></div>`;
+    const forms = {
+      login: () => `<h2 class="major">Log in</h2><form id="authForm">
         <label>Email<input name="email" type="email" required autocomplete="email"></label>
-        <label>Password<input name="password" type="password" required minlength="6" autocomplete="${mode === 'login' ? 'current-password' : 'new-password'}"></label>
-        <p class="err" id="authErr"></p>
-        <button class="btn wide" type="submit">${mode === 'login' ? 'Log in' : 'Create account'}</button>
-        <p class="muted center">${mode === 'login' ? 'New here? <a href="#/register">Create an account</a>' : 'Already have an account? <a href="#/login">Log in</a>'}</p>
-      </form>
-    </section>`;
-    $('#authForm').onsubmit = async e => {
-      e.preventDefault(); const fd = Object.fromEntries(new FormData(e.target)); const b = e.target.querySelector('button');
-      busy(b, true, mode === 'login' ? 'Logging in…' : 'Creating…');
-      try { const r = await API.post(`/api/auth/${mode}`, fd); API.setToken(r.token); USER = r.user; location.hash = '#/'; }
-      catch (err) { $('#authErr').textContent = err.message; } finally { busy(b, false); }
+        <label>Password<input name="password" type="password" required minlength="6" autocomplete="current-password"></label>
+        <p class="err" id="authErr"></p><button class="btn wide" type="submit">Log in</button>
+        <p class="muted center small">New here? <a href="#" data-open="register">Create an account</a></p></form>`,
+      register: () => `<h2 class="major">Create account</h2><form id="authForm">
+        <label>Full name<input name="name" required minlength="2" autocomplete="name"></label>
+        <label>Role<select name="role"><option value="teacher">Teacher</option><option value="parent">Parent</option><option value="clinician">Clinician</option><option value="researcher">Researcher / developer</option></select></label>
+        <label>Email<input name="email" type="email" required autocomplete="email"></label>
+        <label>Password<input name="password" type="password" required minlength="6" autocomplete="new-password"></label>
+        <p class="err" id="authErr"></p><button class="btn wide" type="submit">Create account</button>
+        <p class="muted center small">Already have an account? <a href="#" data-open="login">Log in</a></p></form>`,
+      about: () => `<h2 class="major">About</h2>
+        <p>DyslexiaScreen helps teachers and parents spot children who may have dyslexia early, so they can be referred to a psychologist for a full assessment.</p>
+        <ul><li><b>Reading game:</b> short letter, sound and word exercises scored by an XGBoost and Extra Trees ensemble.</li>
+        <li><b>Handwriting:</b> a convolutional neural network checks letters for reversals such as b and d.</li>
+        <li><b>Eye tracking:</b> the laptop webcam follows the eyes while the child reads three short texts.</li></ul>
+        <p>Each result comes with its reasons, and the three combine into one Reading Difficulty Index.</p>
+        <p class="small">K R Srigowri and Rajshree Gupta, guided by Dr. Vanajaroselin Chirchi.</p>`,
     };
+    const open = k => {
+      $('#art').innerHTML = `<button class="close" aria-label="Close">×</button>${forms[k]()}`;
+      document.body.classList.add('article-open');
+      $('#art .close').onclick = close; $('#art').querySelectorAll('[data-open]').forEach(a => a.onclick = e => { e.preventDefault(); open(a.dataset.open); });
+      const f = $('#authForm'); if (!f) return;
+      f.querySelector('input').focus();
+      f.onsubmit = async e => {
+        e.preventDefault(); const fd = Object.fromEntries(new FormData(f)); const b = f.querySelector('button[type=submit]');
+        busy(b, true, k === 'login' ? 'Logging in…' : 'Creating…');
+        try { const r = await API.post(`/api/auth/${k}`, fd); API.setToken(r.token); USER = r.user; document.body.classList.remove('article-open'); location.hash = '#/'; }
+        catch (err) { $('#authErr').textContent = err.message; } finally { busy(b, false); }
+      };
+    };
+    const close = () => document.body.classList.remove('article-open');
+    view().querySelectorAll('.l-nav [data-open]').forEach(b => b.onclick = () => open(b.dataset.open));
+    $('#artWrap').onclick = e => { if (e.target.id === 'artWrap') close(); };
+    document.onkeydown = e => { if (e.key === 'Escape') close(); };
+    if (mode === 'register') open('register');
   }
 
   // ---------------------------------------------------------------- dashboard
@@ -76,7 +101,7 @@
           ${d.recent.map(c => `<tr><td>${esc(c.name)}</td><td>${c.age}</td><td>${c.rdi ? `<span class="badge ${c.rdi.refer ? 'high' : 'low'}">${pct(c.rdi.rdi, 0)}</span>` : '<span class="badge muted">–</span>'}</td><td><a href="#/child/${c.id}">Open</a></td></tr>`).join('')}</tbody></table>`
           : '<p class="muted">No children yet. Add a child to start a screening.</p>'}</section>
         <section class="card how"><h2>How a screening works</h2><ol class="steps">
-          <li><b>Gamified test</b><span>32 short letter, sound and word exercises (about 6 minutes).</span></li>
+          <li><b>Gamified test</b><span>10 short letter, sound and word exercises (about 2 minutes), or the full 32.</span></li>
           <li><b>Handwriting</b><span>The child writes dictated letters, or you upload a photo of their writing.</span></li>
           <li><b>Eye tracking</b><span>The webcam follows the eyes while the child reads three short texts.</span></li>
           <li><b>Report</b><span>All results combine into the Reading Difficulty Index (RDI).</span></li></ol></section>
@@ -96,7 +121,7 @@
       <form class="card form" id="kidForm">
         <label>Child's name<input name="name" required></label>
         <div class="row2"><label>Age<input name="age" type="number" min="5" max="17" value="9" required></label>
-        <label>Gender<select name="gender"><option value="female">Female</option><option value="male">Male</option></select></label></div>
+        <label>Gender <span class="muted small">(used by the game model only)</span><select name="gender"><option value="female">Female</option><option value="male">Male</option></select></label></div>
         <label>School (optional)<input name="school"></label>
         <label class="check"><input type="checkbox" name="native_speaker" checked> The test language is the child's first language</label>
         <label class="check"><input type="checkbox" name="other_language"> The child speaks another language</label>
@@ -132,15 +157,16 @@
   }
   async function gameView(id) {
     const c = await API.get(`/api/children/${id}`);
-    view().innerHTML = `<header class="page-head"><div><a class="back" href="#/child/${id}">← ${esc(c.name)}</a><h1>Gamified test</h1><p class="muted">32 exercises on letters, sounds, words, spelling, memory and dictation.</p></div></header>
+    view().innerHTML = `<header class="page-head"><div><a class="back" href="#/child/${id}">← ${esc(c.name)}</a><h1>Gamified test</h1><p class="muted">Letter, sound, word and spelling exercises. The short test takes about 2 minutes.</p></div></header>
       <section class="card game-intro" id="gIntro"><h2>Before you start</h2><ul class="ticks"><li>Turn the sound on; many exercises speak a letter or word.</li><li>Let the child use the mouse or touch screen on their own.</li><li>Each exercise has a short timer; “Next exercise” moves on.</li></ul>
+      <label class="inline">Test <select id="gForm"><option value="short" selected>Short: 10 exercises (about 2 minutes)</option><option value="full">Full: all 32 exercises (about 8 minutes)</option></select></label>
       <label class="inline">Seconds per timed exercise <select id="gSecs"><option value="8">8 (quick)</option><option value="12" selected>12 (standard)</option><option value="16">16 (younger children)</option></select></label>
       <button class="btn" id="gStart">Start the test</button></section>
       <section class="card game-card hidden" id="gCard"><div class="g-progress"><i id="gBar"></i></div><div id="gRoot"></div></section>
       <section id="gResult"></section>`;
     $('#gStart').onclick = () => {
       $('#gIntro').classList.add('hidden'); $('#gCard').classList.remove('hidden');
-      const g = new ScreeningGame.Game($('#gRoot'), { seconds: +$('#gSecs').value,
+      const g = new ScreeningGame.Game($('#gRoot'), { seconds: +$('#gSecs').value, only: $('#gForm').value === 'short' ? ScreeningGame.QUICK : null,
         onProgress: (i, n) => $('#gBar').style.width = (100 * i / n) + '%',
         onDone: async (items, secs) => {
           $('#gBar').style.width = '100%'; $('#gRoot').innerHTML = '<div class="loading">Scoring the test…</div>';
@@ -153,7 +179,7 @@
   function gameResult(root, r, id, truth) {
     root.innerHTML = `<div class="grid-res"><section class="card center"><h2>Game risk</h2>${gauge(r.risk / 0.22 > 1 ? 1 : r.risk / 0.22)}
       <p class="big-num">${pct(r.risk)}</p><p class="rdi-band ${r.refer ? 'bad' : 'ok'}">${esc(r.label)}</p>
-      <p class="muted small">Referral cut-off ${pct(r.cutoff, 0)} · model: ${esc(r.model)}</p>${truth != null ? `<p class="truth ${truth == (r.refer ? 1 : 0) ? 'ok' : 'bad'}">Actual diagnosis in dataset: <b>${truth ? 'Dyslexia' : 'No dyslexia'}</b></p>` : ''}</section>
+      <p class="muted small">Referral cut-off ${pct(r.cutoff, 0)} · ${esc(r.model)}</p>${truth != null ? `<p class="truth ${truth == (r.refer ? 1 : 0) ? 'ok' : 'bad'}">Actual diagnosis in dataset: <b>${truth ? 'Dyslexia' : 'No dyslexia'}</b></p>` : ''}</section>
       <section class="card"><h2>Why this result (SHAP)</h2><p class="muted small">The measures that moved this child's risk the most.</p>${reasonsList(r.reasons)}
       ${r.summary ? `<div class="mini-stats">${Object.entries(r.summary).map(([k, v]) => `<div><b>${v}</b><span>${esc(k)}</span></div>`).join('')}</div>` : ''}</section></div>
       ${id ? `<p class="center"><a class="btn" href="#/child/${id}">Back to profile</a> <a class="btn ghost" href="#/child/${id}/report">View report</a></p>` : ''}`;
@@ -250,7 +276,7 @@
       $('#eyeRes').innerHTML = '<div class="card loading">Analysing eye movements…</div>';
       try {
         const r = await API.post('/api/eye/analyze', { child_id: +id, tasks, camera: camLabel, calibration_error_px: err });
-        const LBL = { aoi_dwell_mean: 'time per word', aoi_nfix_mean: 'fixations per word', aoi_skip_rate: 'words skipped', aoi_first_fix_dur_mean: 'first look per word', aoi_revisits_mean: 'returns to a word', aoi_reread_mean: 're-reading time', mean_fix_dur: 'mean fixation', fix_dur_median: 'median fixation', ratio_progress_regress: 'forward/backward ratio', regress_per_fix: 'backward jumps' };
+        const LBL = { aoi_dwell_mean: 'looking time per word', time_per_word: 'reading speed (time per word)', aoi_nfix_mean: 'fixations per word', aoi_skip_rate: 'words skipped', aoi_first_fix_dur_mean: 'first look per word', aoi_revisits_mean: 'returns to a word', aoi_reread_mean: 're-reading time', mean_fix_dur: 'mean fixation', fix_dur_median: 'median fixation', ratio_progress_regress: 'forward/backward ratio', regress_per_fix: 'backward jumps' };
         const TN = { Syl: 'Syllables', Mean: 'Story', Pseudo: 'Made-up words' };
         r.reasons.forEach(x => { const [t, ...rest] = x.feature.split('_'); x.label = `${TN[t]}: ${LBL[rest.join('_')] || rest.join(' ')}`; });
         $('#eyeRes').innerHTML = `<div class="grid-res"><section class="card center"><h2>Eye-movement risk</h2>${gauge(r.risk)}<p class="big-num">${pct(r.risk)}</p><p class="rdi-band ${r.risk >= 0.5 ? 'bad' : 'ok'}">${esc(r.label)}</p>
@@ -270,7 +296,7 @@
     const r = await API.get(`/api/children/${id}/report`); const c = r.child, R = r.rdi;
     view().innerHTML = `<header class="page-head noprint"><div><a class="back" href="#/child/${id}">← ${esc(c.name)}</a><h1>Screening report</h1></div><button class="btn" onclick="window.print()">Download PDF</button></header>
       <article class="report card">
-        <div class="rep-head"><div class="brand"><span class="logo">D</span> DyslexiaScreen</div><div class="muted small">Generated ${fmtDate(r.generated_at)} by ${esc(r.screener)}</div></div>
+        <div class="rep-head"><div class="brand"><span class="logo">${BOOK}</span>DyslexiaScreen</div><div class="muted small">Generated ${fmtDate(r.generated_at)} by ${esc(r.screener)}</div></div>
         <h2>${esc(c.name)} <span class="muted">· age ${c.age} · ${c.gender}</span></h2>
         ${R ? `<div class="rep-rdi">${gauge(R.rdi)}<div><p class="big-num">RDI ${pct(R.rdi, 0)}</p><p class="rdi-band ${R.refer ? 'bad' : 'ok'}">${R.band}: ${R.refer ? 'refer for a full assessment by a psychologist' : 'no referral needed now; re-screen next term'}</p>
           <table class="tbl"><thead><tr><th>Module</th><th>Risk</th><th>Cut-off</th><th>Share of RDI (log-odds)</th></tr></thead><tbody>${Object.entries(R.contributions).map(([k, v]) => `<tr><td>${v.name}</td><td>${pct(v.risk)}</td><td>${pct(R.cutoffs[k], 0)}</td><td class="${v.log_odds > 0 ? 'up' : 'down'}">${v.log_odds > 0 ? '+' : ''}${v.log_odds.toFixed(2)}</td></tr>`).join('')}</tbody></table></div></div>` : '<p>No modules completed yet.</p>'}
@@ -299,6 +325,10 @@
       $('#labPane').innerHTML = `<p class="muted">${esc(d.dataset)}${d.cv ? ' · ' + esc(d.cv) : ''}</p>
         <div class="stats"><div class="stat hl"><b>${pct(prop[1].accuracy)}</b><span>Accuracy (proposed)</span></div><div class="stat hl"><b>${(prop[1].roc_auc).toFixed(3)}</b><span>ROC-AUC (proposed)</span></div>
           ${hc ? `<div class="stat"><b>${pct(hc.sensitivity)}</b><span>Children with dyslexia caught at the screening cut-off (${d.heldout.n} held-out children)</span></div>` : `<div class="stat"><b>${(prop[1].f1 ?? prop[1].macro_f1).toFixed(3)}</b><span>F1 score</span></div>`}<div class="stat"><b>+${(100 * (prop[1].accuracy - meanOther)).toFixed(1)} pts</b><span>Accuracy over the average of ${others.length} other algorithms</span></div></div>
+        ${d.short_form ? `<section class="card"><h2>Short form used in the app (10 exercises, about 2 minutes)</h2><p class="muted">The same ensemble trained on 10 of the 32 exercises, chosen for how well each one separates the two groups. Same 5-fold cross-validation.</p>
+          <div class="kv"><div><b>${pct(d.short_form.cv.accuracy)}</b><span>Accuracy</span></div><div><b>${d.short_form.cv.roc_auc.toFixed(3)}</b><span>ROC-AUC</span></div><div><b>${pct(d.short_form.heldout.sensitivity)}</b><span>Dyslexia caught at cut-off (held-out)</span></div><div><b>${pct(d.short_form.heldout.specificity)}</b><span>Typical readers cleared</span></div></div></section>` : ''}
+        ${d.webcam_model && d.webcam_model.note ? `<section class="card"><h2>Live webcam model</h2><p class="muted">The research data was recorded with a 250 Hz eye tracker. For the live app we degraded every recording to webcam quality (30 Hz, calibration offset, drift and jitter), ran it through the same fixation code as the website, and trained on that. Children are the unit of cross-validation.</p>
+          <div class="kv"><div><b>${pct(d.webcam_model.accuracy)}</b><span>Accuracy</span></div><div><b>${d.webcam_model.roc_auc.toFixed(3)}</b><span>ROC-AUC</span></div><div><b>${d.webcam_model.n_features}</b><span>Reading measures</span></div></div></section>` : ''}
         <section class="card"><h2>All algorithms</h2><div class="tbl-wrap"><table class="tbl lab"><thead><tr><th>Algorithm</th><th>Accuracy</th><th>ROC-AUC</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead><tbody>
           ${ms.map(([n, m]) => `<tr class="${m === prop[1] ? 'prop' : ''}"><td>${esc(n)}</td><td>${pct(m.accuracy)}</td><td>${m.roc_auc.toFixed(3)}</td><td>${(m.precision).toFixed(3)}</td><td>${(m.recall).toFixed(3)}</td><td>${(m.f1 ?? m.macro_f1).toFixed(3)}</td></tr>`).join('')}</tbody></table></div></section>
         <div class="grid2"><section class="card"><h2>Accuracy and ROC-AUC</h2><div class="chart-box tall"><canvas id="chBar"></canvas></div></section>
@@ -306,13 +336,13 @@
         ${hc ? `<section class="card"><h2>Screening on ${d.heldout.n} held-out children (cut-off 0.11, as used in the app)</h2><p class="muted">Sensitivity ${pct(hc.sensitivity)} · specificity ${pct(hc.specificity)} · ROC-AUC ${d.heldout.roc_auc.toFixed(3)}. These children were never used for training.</p>${confusion(hc.confusion, ['No dyslexia', 'Dyslexia'])}</section>` : ''}
         ${prop[1].roc ? `<section class="card"><h2>Confusion matrix (proposed, threshold ${prop[1].threshold})</h2>${confusion(prop[1].confusion, ['No dyslexia', 'Dyslexia'])}</section>` : ''}`;
       const css = getComputedStyle(document.documentElement), C1 = css.getPropertyValue('--accent').trim() || '#3b5bdb', C2 = css.getPropertyValue('--accent2').trim() || '#f08c00', MUTE = css.getPropertyValue('--mute').trim() || '#999';
-      Chart.defaults.font.family = getComputedStyle(document.body).fontFamily; Chart.defaults.color = css.getPropertyValue('--ink2').trim() || '#555';
+      Chart.defaults.font.family = getComputedStyle(document.body).fontFamily; Chart.defaults.color = 'rgba(255,255,255,.8)'; Chart.defaults.borderColor = 'rgba(255,255,255,.12)';
       charts.push(new Chart($('#chBar'), { type: 'bar', data: { labels: ms.map(m => m[0].replace(' (proposed)', ' ★')), datasets: [
         { label: 'Accuracy', data: ms.map(m => +(100 * m[1].accuracy).toFixed(1)), backgroundColor: ms.map(m => m === prop ? C1 : C1 + '66') },
         { label: 'ROC-AUC × 100', data: ms.map(m => +(100 * m[1].roc_auc).toFixed(1)), backgroundColor: ms.map(m => m === prop ? C2 : C2 + '66') }] },
         options: { indexAxis: 'y', maintainAspectRatio: false, scales: { x: { min: 40, max: 100 } }, plugins: { legend: { position: 'bottom' } } } }));
       if (prop[1].roc) charts.push(new Chart($('#chRoc'), { type: 'scatter', data: { datasets: ms.slice(0, 7).map(([n, m]) => ({ label: n.replace(' (proposed)', ' ★'), showLine: true, pointRadius: 0,
-        borderWidth: m === prop[1] ? 3 : 1.2, borderColor: m === prop[1] ? C1 : MUTE + (n.length % 2 ? 'aa' : '66'), data: m.roc.fpr.map((x, i) => ({ x, y: m.roc.tpr[i] })) })) },
+        borderWidth: m === prop[1] ? 3 : 1.2, borderColor: m === prop[1] ? '#FFD58A' : (n.length % 2 ? 'rgba(255,255,255,.55)' : 'rgba(200,182,255,.45)'), data: m.roc.fpr.map((x, i) => ({ x, y: m.roc.tpr[i] })) })) },
         options: { maintainAspectRatio: false, scales: { x: { min: 0, max: 1, title: { display: true, text: 'False positive rate' } }, y: { min: 0, max: 1, title: { display: true, text: 'True positive rate' } } }, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } } }));
     };
     view().querySelectorAll('.tab').forEach(t => t.onclick = () => { view().querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t)); show(t.dataset.k); });
@@ -350,7 +380,7 @@
     const isPublic = r[2];
     if (!isPublic && !API.getToken()) { location.hash = '#/login'; return; }
     if (!isPublic && !USER) { try { USER = await API.get('/api/auth/me'); } catch (e) { return; } }
-    document.body.classList.toggle('bare', !!isPublic);
+    document.body.classList.toggle('bare', !!isPublic); document.body.classList.remove('article-open'); document.onkeydown = null;
     if (USER) { $('#who').textContent = USER.name; }
     document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('on', h === a.getAttribute('href') || (a.getAttribute('href') !== '#/' && h.startsWith(a.getAttribute('href')))));
     view().innerHTML = '<div class="loading">Loading…</div>';
@@ -360,7 +390,7 @@
   window.addEventListener('hashchange', route);
   document.addEventListener('DOMContentLoaded', () => {
     $('#logout').onclick = () => { API.setToken(null); USER = null; location.hash = '#/login'; };
-    $('#menuBtn').onclick = () => document.body.classList.toggle('nav-open');
+    const mb = $('#menuBtn'); if (mb) mb.onclick = () => document.body.classList.toggle('nav-open');
     route();
   });
 })();

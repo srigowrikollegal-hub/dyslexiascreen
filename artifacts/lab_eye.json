@@ -954,20 +954,20 @@
   }
  },
  "webcam_model": {
-  "accuracy": 0.8585714285714285,
-  "roc_auc": 0.9244081632653061,
-  "precision": 0.9013734115347016,
-  "recall": 0.8057142857142857,
-  "f1": 0.8507333550265948,
-  "specificity": 0.9114285714285714,
-  "avg_precision": 0.9401829917508188,
-  "accuracy_sd": 0.011866605518454388,
-  "roc_auc_sd": 0.009237123369675528,
-  "precision_sd": 0.02025669479496595,
-  "recall_sd": 0.011428571428571432,
-  "f1_sd": 0.011741903214574644,
-  "specificity_sd": 0.020000000000000007,
-  "avg_precision_sd": 0.006313804627977273,
+  "accuracy": 0.8471428571428572,
+  "roc_auc": 0.917469387755102,
+  "precision": 0.8677902722672647,
+  "recall": 0.82,
+  "f1": 0.8428626716859915,
+  "specificity": 0.8742857142857142,
+  "avg_precision": 0.9371256915804246,
+  "accuracy_sd": 0.023079277744862146,
+  "roc_auc_sd": 0.01085714285714287,
+  "precision_sd": 0.02989373350843485,
+  "recall_sd": 0.028713930346059652,
+  "f1_sd": 0.023672385190828735,
+  "specificity_sd": 0.031815796359028675,
+  "avg_precision_sd": 0.007687239366821898,
   "roc": {
    "fpr": [
     0.0,
@@ -975,33 +975,29 @@
     0.0,
     0.0286,
     0.0286,
-    0.0571,
-    0.0571,
     0.0857,
     0.0857,
-    0.1143,
-    0.1143,
+    0.1429,
+    0.1429,
     0.1714,
     0.1714,
-    0.2,
-    0.2,
-    0.2286,
-    0.2286,
-    0.6286,
-    0.6286,
-    0.7714,
-    0.7714,
+    0.2857,
+    0.2857,
+    0.3714,
+    0.3714,
+    0.4571,
+    0.4571,
+    0.8,
+    0.8,
     1.0
    ],
    "tpr": [
     0.0,
     0.0286,
-    0.5429,
-    0.5429,
+    0.6571,
+    0.6571,
     0.7714,
     0.7714,
-    0.8,
-    0.8,
     0.8286,
     0.8286,
     0.8571,
@@ -1020,16 +1016,16 @@
   },
   "confusion": [
    [
-    32,
-    3
+    30,
+    5
    ],
    [
-    7,
-    28
+    6,
+    29
    ]
   ],
   "threshold": 0.5,
-  "n_features": 30,
+  "n_features": 33,
   "features": [
    "Syl_aoi_dwell_mean",
    "Syl_aoi_nfix_mean",
@@ -1041,6 +1037,7 @@
    "Syl_fix_dur_median",
    "Syl_ratio_progress_regress",
    "Syl_regress_per_fix",
+   "Syl_time_per_word",
    "Mean_aoi_dwell_mean",
    "Mean_aoi_nfix_mean",
    "Mean_aoi_skip_rate",
@@ -1051,6 +1048,7 @@
    "Mean_fix_dur_median",
    "Mean_ratio_progress_regress",
    "Mean_regress_per_fix",
+   "Mean_time_per_word",
    "Pseudo_aoi_dwell_mean",
    "Pseudo_aoi_nfix_mean",
    "Pseudo_aoi_skip_rate",
@@ -1060,7 +1058,9 @@
    "Pseudo_mean_fix_dur",
    "Pseudo_fix_dur_median",
    "Pseudo_ratio_progress_regress",
-   "Pseudo_regress_per_fix"
-  ]
+   "Pseudo_regress_per_fix",
+   "Pseudo_time_per_word"
+  ],
+  "note": "ETDD70 degraded to webcam quality (30 Hz, offset, drift, jitter, smoothing), same feature code as the live app"
  }
 }

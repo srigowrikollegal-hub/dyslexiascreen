@@ -6,11 +6,13 @@
 <title>DyslexiaScreen</title>
 <meta name="description" content="Dyslexia risk screening with a letter game, handwriting analysis and webcam eye tracking.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='%236A4BEF'/><stop offset='1' stop-color='%23FF8A8A'/></linearGradient></defs><circle cx='32' cy='32' r='32' fill='url(%23g)'/><text x='32' y='44' font-size='36' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'>D</text></svg>">
+<link rel="preload" href="/img/bg-dusk.jpg" as="image">
 <link rel="stylesheet" href="/css/app.css">
 </head>
 <body class="bare">
-<aside class="side">
-  <a class="brand" href="#/"><span class="logo">D</span> DyslexiaScreen</a>
+<div class="bg" aria-hidden="true"></div>
+<header class="top">
+  <a class="brand" href="#/"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7c-2-1.6-5-2.1-8.5-1.6v12.4c3.5-.5 6.5 0 8.5 1.6 2-1.6 5-2.1 8.5-1.6V5.4C17 4.9 14 5.4 12 7z"/><path d="M12 7v12.4"/><path d="M12 2.2v1.6M9.6 3l.6 1.1M14.4 3l-.6 1.1"/></svg></span>DyslexiaScreen</a>
   <nav class="nav">
     <a href="#/">Dashboard</a>
     <a href="#/children">Children</a>
@@ -19,8 +21,7 @@
     <a href="#/about">About</a>
   </nav>
   <div class="side-foot"><span id="who"></span><button class="btn ghost small" id="logout">Log out</button></div>
-</aside>
-<button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+</header>
 <main id="view"></main>
 <div id="toast" class="toast" role="status"></div>
 <script src="/vendor/chart.umd.js"></script>

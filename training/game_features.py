@@ -85,3 +85,22 @@ def items_to_row(items, age, gender, native, other, seconds=12):
         row[f'Clicks{q}'] = float(C); row[f'Hits{q}'] = float(H); row[f'Misses{q}'] = float(M); row[f'Score{q}'] = float(H)
         row[f'Accuracy{q}'] = H / C if C else 0.0; row[f'Missrate{q}'] = M / C if C else 0.0
     return row
+
+
+# Short form: 10 exercises covering letters, syllables, words, made-up words, spelling, meaning,
+# grammar and word building (chosen for how well each separates the two groups, and for variety).
+QUICK = [4, 9, 11, 19, 20, 22, 24, 25, 26, 28]
+QUICK_RAW = ['Gender', 'Nativelang', 'Otherlang', 'Age'] + [f'{m}{q}' for q in QUICK for m in MEAS]
+
+
+def quick_features(row):
+    """Model inputs for the short form: the 10 exercises' measures plus summaries over them."""
+    f = {c: row[c] for c in QUICK_RAW}
+    for m in ['Clicks', 'Hits', 'Misses']:
+        f[f'quick_{m}'] = _sum([row[f'{m}{q}'] for q in QUICK])
+    f['quick_accuracy'] = _div(f['quick_Hits'], f['quick_Clicks'])
+    f['quick_missrate'] = _div(f['quick_Misses'], f['quick_Clicks'])
+    acc = np.array([row[f'Accuracy{q}'] for q in QUICK], float)
+    f['quick_low_accuracy'] = float((acc < 0.5).sum())
+    f['quick_hits_per_year_of_age'] = _div(f['quick_Hits'], float(row['Age']))
+    return f

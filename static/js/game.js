@@ -45,13 +45,14 @@
   class Game {
     constructor(root, opts) {
       this.root = root; this.secs = opts.seconds || 12; this.onDone = opts.onDone; this.onProgress = opts.onProgress || (() => {});
+      this.items = opts.only ? ITEMS.filter(it => opts.only.includes(it.q)) : ITEMS;   // short form: a subset of exercises
       this.results = []; this.i = 0; this.t0 = Date.now();
     }
     start() { this.next(); }
     next() {
-      if (this.i >= ITEMS.length) { this.onDone(this.results, (Date.now() - this.t0) / 1000); return; }
-      const it = ITEMS[this.i];
-      this.onProgress(this.i, ITEMS.length, it);
+      if (this.i >= this.items.length) { this.onDone(this.results, (Date.now() - this.t0) / 1000); return; }
+      const it = this.items[this.i];
+      this.onProgress(this.i, this.items.length, it);
       this.cur = { q: it.q, clicks: 0, hits: 0, misses: 0 };
       this.root.innerHTML = '';
       const head = el('div', 'g-head');
@@ -205,5 +206,6 @@
       stage.append(box); show(); this.countdown(this.secs * 4);
     }
   }
-  window.ScreeningGame = { Game, ITEMS, SAY };
+  const QUICK = [4, 9, 11, 19, 20, 22, 24, 25, 26, 28];   // same 10 exercises as the short-form model
+  window.ScreeningGame = { Game, ITEMS, SAY, QUICK };
 })();
