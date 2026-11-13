@@ -229,7 +229,7 @@
       <section class="card" id="hwPane"></section><section id="hwRes"></section>`;
     const panes = {
       draw: () => { $('#hwPane').innerHTML = `<p>Press 🔊 in each box to hear the letter, then let the child write it in the box.</p><div class="hw-grid" id="pad"></div><button class="btn" id="hwGo">Analyse handwriting</button>`;
-        const P = HW.pad($('#pad')); $('#hwGo').onclick = async e => { const blobs = await P.blobs(); if (!blobs.length) return toast('Write at least one letter first.', true); send(blobs, e.target); }; },
+        const P = HW.pad($('#pad')); $('#hwGo').onclick = async e => { const blobs = await P.blobs(); if (!blobs.length) return toast('Write at least one letter first.', true); send(blobs, e.target, P.letters()); }; },
       sheet: () => { $('#hwPane').innerHTML = `<p>Upload a clear photo or scan of the child's handwriting (dark pen on light paper works best).</p><input type="file" accept="image/*" id="sheetIn"><img id="sheetPrev" class="sheet-prev hidden"><button class="btn" id="hwGo">Analyse page</button>`;
         $('#sheetIn').onchange = e => { const f = e.target.files[0]; if (f) { $('#sheetPrev').src = URL.createObjectURL(f); $('#sheetPrev').classList.remove('hidden'); } };
         $('#hwGo').onclick = async e => { const f = $('#sheetIn').files[0]; if (!f) return toast('Choose a photo first.', true);
@@ -238,14 +238,14 @@
       files: () => { $('#hwPane').innerHTML = `<p>Upload one or more images, each with a single letter.</p><input type="file" accept="image/*" multiple id="filesIn"><button class="btn" id="hwGo">Analyse letters</button>`;
         $('#hwGo').onclick = e => { const fs = [...$('#filesIn').files]; if (!fs.length) return toast('Choose images first.', true); send(fs, e.target); }; },
     };
-    async function send(blobs, btn) {
-      const fd = new FormData(); fd.append('child_id', id); blobs.forEach((b, i) => fd.append('images', b, `letter${i}.png`));
+    async function send(blobs, btn, letters) {
+      const fd = new FormData(); fd.append('child_id', id); blobs.forEach((b, i) => fd.append('images', b, `letter${i}.png`)); if (letters) fd.append('letters', letters.join(','));
       busy(btn, true, 'Analysing…'); try { showHW(await API.form('/api/handwriting/predict', fd)); } catch (err) { toast(err.message, true); } finally { busy(btn, false); }
     }
     function showHW(r, sheetUrl) {
       $('#hwRes').innerHTML = `<div class="grid-res"><section class="card center"><h2>Handwriting score</h2>${gauge(r.risk || 0)}<p class="big-num">${pct(r.risk)}</p>
         <p class="rdi-band ${r.risk >= 0.5 ? 'bad' : 'ok'}">${esc(r.label)}</p><p class="muted small">${r.n_letters} letters · ${r.n_reversal} reversal · ${r.n_corrected} corrected</p></section>
-        <section class="card"><h2>Each letter (Grad-CAM)</h2><p class="muted small">Bright areas show the strokes the network used.</p><div class="letters">${r.letters.map(l => `<figure class="lt ${l.pred.toLowerCase()}"><img src="${l.cam}"><figcaption><b>${l.pred}</b> ${pct(l.probs[l.pred], 0)}</figcaption></figure>`).join('')}</div></section></div>
+        <section class="card"><h2>Each letter (Grad-CAM)</h2><p class="muted small">Bright areas show the strokes the network used.</p><div class="letters">${r.letters.map(l => `<figure class="lt ${l.pred.toLowerCase()}"><img src="${l.cam}"><figcaption><b>${l.pred}</b> ${pct(l.probs[l.pred], 0)}${l.rule ? `<br><span class="small muted">${l.rule}</span>` : ''}</figcaption></figure>`).join('')}</div></section></div>
         ${sheetUrl ? `<section class="card"><h2>Letters found on the page</h2><div class="sheet-wrap"><img src="${sheetUrl}">${r.letters.map(l => l.box ? `<span class="sbox ${l.pred.toLowerCase()}" style="left:${100 * l.box.x}%;top:${100 * l.box.y}%;width:${100 * l.box.w}%;height:${100 * l.box.h}%"></span>` : '').join('')}</div></section>` : ''}
         <p class="center"><a class="btn" href="#/child/${id}">Back to profile</a></p>`;
       $('#hwRes').scrollIntoView({ behavior: 'smooth' });

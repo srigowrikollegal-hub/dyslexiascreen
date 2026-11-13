@@ -183,12 +183,12 @@ def game_sample(dyslexia: Optional[int] = None, user: User = Depends(current_use
 
 # ---------------------------------------------------------------- module 2: handwriting
 @app.post("/api/handwriting/predict")
-async def hw_predict(child_id: int = Form(...), images: List[UploadFile] = File(...),
+async def hw_predict(child_id: int = Form(...), images: List[UploadFile] = File(...), letters: Optional[str] = Form(None),
                      user: User = Depends(current_user), db: Session = Depends(get_db)):
     from .ml import handwriting
     c = child_of(user, child_id, db)
     blobs = [await f.read() for f in images]
-    res = handwriting.predict_images(blobs)
+    res = handwriting.predict_images(blobs, letters.split(',') if letters else None)
     slim = {k: v for k, v in res.items()}
     a = save(db, c, "handwriting", res["risk"], res["label"], {"result": slim})
     return {"assessment_id": a.id, **res}

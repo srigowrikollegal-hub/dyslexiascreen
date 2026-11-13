@@ -91,13 +91,45 @@ def summarise(letters):
             'letters': letters}
 
 
-def predict_images(blobs):
-    imgs = []
-    for b in blobs:
-        c = canon(to_gray_ink(Image.open(io.BytesIO(b))))
+BOWL_RIGHT = {'b': True, 'p': True, 'd': False, 'q': False}
+
+
+def orientation(g, letter):
+    """Letter-orientation rule for dictated b, d, p and q: find the stem (the column with the most ink)
+    and check on which side the bowl lies. True = written the right way, False = mirrored, None = unsure."""
+    if letter not in BOWL_RIGHT:
+        return None
+    ink = g > max(otsu(g), 10)
+    ys, xs = np.nonzero(ink)
+    if len(xs) < 30:
+        return None
+    ink = ink[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    cols = ink.sum(0); stem = int(np.argmax(cols)); w = ink.shape[1]; band = max(2, int(0.12 * w))
+    left = ink[:, :max(stem - band, 0)].sum(); right = ink[:, stem + band + 1:].sum()
+    if max(left, right) < 0.15 * ink.sum() or max(left, right) < 1.3 * max(min(left, right), 1):
+        return None
+    return (right > left) == BOWL_RIGHT[letter]
+
+
+def predict_images(blobs, letters=None):
+    """letters: the letter dictated for each image (from the writing pad), or None for unknown letters.
+    A correct d looks like a mirrored b (and q like p), so for dictated letters the direction comes from
+    the orientation rule and the CNN decides between a clean and a corrected (overwritten) letter."""
+    imgs, rules = [], []
+    for i, b in enumerate(blobs):
+        g = to_gray_ink(Image.open(io.BytesIO(b)))
+        c = canon(g)
         if c is not None:
             imgs.append(c)
-    return summarise(classify(imgs) if imgs else [])
+            rules.append(orientation(g, (letters[i] if letters and i < len(letters) else '') or ''))
+    out = classify(imgs) if imgs else []
+    for l, ok in zip(out, rules):
+        if ok is None:
+            continue
+        p = l['probs']; straight = p['Normal'] + p['Reversal']
+        l['probs'] = {'Normal': straight if ok else 0.0, 'Reversal': 0.0 if ok else straight, 'Corrected': p['Corrected']}
+        l['pred'] = max(l['probs'], key=l['probs'].get); l['rule'] = 'correct direction' if ok else 'mirrored'
+    return summarise(out)
 
 
 def predict_sheet(blob, max_letters=60):

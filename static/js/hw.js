@@ -28,6 +28,7 @@
     });
     return {
       boxes,
+      letters: () => boxes.filter(b => b.isInked()).map(b => b.letter),
       blobs: () => Promise.all(boxes.filter(b => b.isInked()).map(b => new Promise(r => {
         const o = document.createElement('canvas'); o.width = o.height = 220; const og = o.getContext('2d');
         og.fillStyle = '#fff'; og.fillRect(0, 0, 220, 220); og.drawImage(b.canvas, 0, 0); o.toBlob(r, 'image/png');   // ink on white, no lines
