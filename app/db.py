@@ -5,8 +5,9 @@ from sqlalchemy import (create_engine, Column, Integer, String, Float, DateTime,
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 url = os.environ.get("DATABASE_URL", "sqlite:///./dyslexia.db")
-if url.startswith("postgres://"):
-    url = url.replace("postgres://", "postgresql+psycopg2://", 1)
+for prefix in ("postgres://", "postgresql://"):
+    if url.startswith(prefix):
+        url = "postgresql+psycopg2://" + url[len(prefix):]   # SQLAlchemy 2.1 would otherwise look for psycopg 3
 engine = create_engine(url, connect_args={"check_same_thread": False} if url.startswith("sqlite") else {},
                        pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
