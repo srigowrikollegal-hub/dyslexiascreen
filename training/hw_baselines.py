@@ -40,6 +40,7 @@ MODELS = {
 
 
 def score(yt, P):
+    P = np.asarray(P, np.float64); P = np.clip(P, 1e-12, None); P = P / P.sum(1, keepdims=True)
     pred = P.argmax(1)
     return dict(accuracy=accuracy_score(yt, pred), macro_f1=f1_score(yt, pred, average='macro'),
                 precision=precision_score(yt, pred, average='macro'), recall=recall_score(yt, pred, average='macro'),
