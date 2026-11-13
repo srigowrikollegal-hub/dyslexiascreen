@@ -271,7 +271,7 @@
       $('#eyeSetup').classList.add('hidden'); const L = $('#eyeLayer'); L.classList.remove('hidden'); document.body.classList.add('eye-mode');
       const err = await EyeTest.calibrate(L);
       const tasks = {}, snaps = {};
-      for (const k of EyeTest.ORDER) { const t = await EyeTest.readTask(L, k); tasks[k] = { samples: t.samples, boxes: t.boxes }; snaps[k] = t; }
+      for (const k of EyeTest.ORDER) { const t = await EyeTest.readTask(L, k); tasks[k] = { samples: t.samples, boxes: t.boxes, duration_ms: t.duration_ms }; snaps[k] = t; }
       EyeTest.stopGazer(); L.classList.add('hidden'); document.body.classList.remove('eye-mode');
       $('#eyeRes').innerHTML = '<div class="card loading">Analysing eye movements…</div>';
       try {
@@ -287,7 +287,7 @@
             <canvas class="gaze-canvas" id="gc_${k}"></canvas></section>`; }).join('')}
           <p class="center"><a class="btn" href="#/child/${id}">Back to profile</a></p>`;
         EyeTest.ORDER.forEach(k => EyeTest.drawResult($(`#gc_${k}`), snaps[k], r.tasks[k].fixations));
-      } catch (er) { $('#eyeRes').innerHTML = `<p class="err">${esc(er.message)}</p>`; }
+      } catch (er) { $('#eyeRes').innerHTML = `<section class="card"><h2>Please try again</h2><p class="err">${esc(er.message)}</p><button class="btn" onclick="location.reload()">Restart eye tracking</button></section>`; }
     };
   }
 

@@ -102,7 +102,7 @@
         window.webgazer.clearGazeListener();
         const boxes = [...text.querySelectorAll('.w')].map(s => { const r = s.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, line: +s.dataset.line, word: s.textContent }; });
         const snap = { lines: T.lines, title: T.title, viewport: [innerWidth, innerHeight] };
-        resolve({ samples, boxes, snap });
+        resolve({ samples, boxes, snap, duration_ms: Math.round(performance.now() - t0) });
       };
       const onKey = e => { if (e.code === 'Space') { e.preventDefault(); finish(); } };
       window.addEventListener('keydown', onKey); done.onclick = finish;

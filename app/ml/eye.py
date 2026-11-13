@@ -102,11 +102,17 @@ def task_measures(samples, boxes):
 def analyse(tasks):
     """tasks: {'syllables'|'passage'|'pseudo': {'samples': [[t,x,y],...], 'boxes': [...]}}"""
     b = bundle(); feats = dict(b['feature_means'])
+    for key in TASKS:
+        if key in tasks and len(tasks[key].get('samples') or []) < 20:
+            raise ValueError('The camera could not see the eyes while reading. Sit facing a light, keep the face '
+                             'inside the green box, and try again.')
     out = {}
     for key, tag in TASKS.items():
         if key not in tasks:
             continue
         m, summ, fx = task_measures(tasks[key]['samples'], tasks[key]['boxes'])
+        if tasks[key].get('duration_ms'):        # time from showing the text to "Done reading"
+            summ['reading_time_ms'] = float(tasks[key]['duration_ms'])
         m['time_per_word'] = summ['reading_time_ms'] / max(summ['words'], 1)   # reading speed (ms per word)
         for k, v in m.items():
             feats[f'{tag}_{k}'] = v

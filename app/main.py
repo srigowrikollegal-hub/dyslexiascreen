@@ -209,7 +209,10 @@ async def hw_sheet(child_id: int = Form(...), image: UploadFile = File(...),
 def eye_analyze(body: EyeIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     from .ml import eye
     c = child_of(user, body.child_id, db)
-    res = eye.analyse(body.tasks)
+    try:
+        res = eye.analyse(body.tasks)
+    except ValueError as e:                       # too little gaze data: ask to repeat instead of guessing
+        raise HTTPException(400, str(e))
     res["label"] = "Atypical reading pattern" if res["risk"] >= 0.5 else "Typical reading pattern"
     res["camera"] = body.camera; res["calibration_error_px"] = body.calibration_error_px
     a = save(db, c, "eye", res["risk"], res["label"], {"result": res})
