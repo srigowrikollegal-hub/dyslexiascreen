@@ -174,7 +174,7 @@ td.up,.up{color:var(--bad)} td.down,.down{color:var(--ok)}
 /* ---------- eye tracking */
 .eye-layer{position:fixed;inset:0;background:#FFFDF8;z-index:50}
 body.eye-mode .side,body.eye-mode .menu-btn{display:none}
-.calib .calib-tip{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);color:var(--ink2);font-size:1.1rem;text-align:center;pointer-events:none;max-width:440px}
+.calib .calib-tip{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);color:var(--ink2);font-size:1.1rem;text-align:center;pointer-events:none;max-width:440px} .calib-tip p{margin:0 0 6px} .calib-prog{font-size:.9rem;color:var(--mute)} .calib-skip{pointer-events:auto;margin-top:4px}
 .calib-dot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:3px solid var(--accent2);background:conic-gradient(var(--accent2) calc(var(--fill,0)*360deg),#fff 0);cursor:pointer;box-shadow:0 0 0 6px rgba(255,122,107,.15)}
 .calib-dot.done{border-color:var(--ok);background:var(--ok);box-shadow:none} .calib-dot.target{border-color:var(--accent);background:var(--accent);animation:pulse 1s infinite}
 @keyframes pulse{50%{transform:scale(1.25)}}
@@ -182,7 +182,7 @@ body.eye-mode .side,body.eye-mode .menu-btn{display:none}
 .read-title{color:var(--ink2);font-size:1rem} .read-text{font-size:34px;line-height:2.4;font-weight:500;letter-spacing:.02em;word-spacing:.35em;color:#1f1a40}
 .read-line{white-space:nowrap}
 .gaze-canvas{width:100%;display:block;border-radius:14px;outline:1px solid var(--line);margin-top:6px;background:#fff}
-#webgazerVideoContainer{z-index:60!important;border-radius:12px;overflow:hidden}
+#webgazerVideoContainer{z-index:60!important;border-radius:12px;overflow:hidden;pointer-events:none;top:calc(70% - 90px)!important;left:calc(30% - 120px)!important}
 
 /* ---------- model lab */
 .chart-box{position:relative;height:300px} .chart-box.tall{height:390px}

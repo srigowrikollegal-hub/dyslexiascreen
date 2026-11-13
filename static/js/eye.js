@@ -20,6 +20,7 @@
     const wg = window.webgazer;
     wg.params.faceMeshSolutionPath = '/vendor/webgazer/mediapipe/face_mesh';
     wg.params.showVideoPreview = true;
+    wg.params.videoViewerWidth = 240; wg.params.videoViewerHeight = 180;   // small preview, placed between the dots by CSS
     if (deviceId) wg.setCameraConstraints({ video: { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } } });
     wg.saveDataAcrossSessions(false);
     await wg.setRegression('ridge').begin();
@@ -40,25 +41,33 @@
       const pts = [[10, 10], [50, 10], [90, 10], [10, 50], [50, 50], [90, 50], [10, 90], [50, 90], [90, 90]];
       let left = pts.length;
       const tip = document.createElement('div'); tip.className = 'calib-tip';
-      tip.textContent = 'Look at each dot and click it 5 times. Keep your head still.';
-      layer.append(tip);
+      const msg = document.createElement('p'); msg.textContent = 'Look at each dot and click it 5 times. Keep your head still.';
+      const prog = document.createElement('p'); prog.className = 'calib-prog'; prog.textContent = `0 of ${pts.length} dots done`;
+      const skip = document.createElement('button'); skip.className = 'btn ghost small calib-skip'; skip.textContent = 'Continue'; skip.hidden = true;
+      skip.onclick = () => { if (left) { left = 0; check(); } };
+      tip.append(msg, prog, skip); layer.append(tip);
       pts.forEach(([x, y]) => {
         const d = document.createElement('button'); d.className = 'calib-dot'; d.style.left = x + '%'; d.style.top = y + '%';
         let n = 0; d.onclick = () => {
           n++; d.style.setProperty('--fill', n / 5);
-          if (n >= 5) { d.disabled = true; d.classList.add('done'); left--; if (!left) check(); }
+          if (n >= 5) {
+            d.disabled = true; d.classList.add('done'); left--;
+            prog.textContent = `${pts.length - left} of ${pts.length} dots done`;
+            if (pts.length - left >= 7) skip.hidden = false;   // safety: allow moving on if a dot cannot be reached
+            if (!left) check();
+          }
         };
         layer.append(d);
       });
       async function check() {
         layer.querySelectorAll('.calib-dot').forEach(d => d.remove());
-        tip.textContent = 'Now stare at the centre dot for 3 seconds.';
+        msg.textContent = 'Now stare at the centre dot for 3 seconds.'; prog.remove(); skip.remove();
         const c = document.createElement('div'); c.className = 'calib-dot target'; c.style.left = '50%'; c.style.top = '50%'; layer.append(c);
         await sleep(600);
         const r = c.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, errs = [];
         const t0 = performance.now();
         while (performance.now() - t0 < 3000) {
-          const p = await window.webgazer.getCurrentPrediction();
+          const p = await Promise.race([window.webgazer.getCurrentPrediction(), sleep(500).then(() => null)]);   // never wait on a lost face
           if (p) errs.push(Math.hypot(p.x - cx, p.y - cy));
           await sleep(60);
         }
@@ -86,6 +95,7 @@
       wrap.append(h, text, done); layer.append(wrap);
       const samples = []; const t0 = performance.now();
       window.webgazer.showPredictionPoints(false);
+      try { window.webgazer.showVideoPreview(false); } catch (e) {}   // nothing on screen but the text while reading
       window.webgazer.setGazeListener((d) => { if (d) samples.push([Math.round(performance.now() - t0), Math.round(d.x), Math.round(d.y)]); });
       const finish = () => {
         window.removeEventListener('keydown', onKey);
