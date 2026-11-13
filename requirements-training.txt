@@ -1,0 +1,7 @@
+# extra packages used only to train the models (not needed on the server)
+tensorflow-cpu
+tf2onnx
+lightgbm
+shap
+scikit-image
+pandas

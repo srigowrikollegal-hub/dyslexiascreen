@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DyslexiaScreen</title>
+<meta name="description" content="Dyslexia risk screening with a letter game, handwriting analysis and webcam eye tracking.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%231F7A6B'/><text x='32' y='44' font-size='36' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'>D</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bare">
+<aside class="side">
+  <a class="brand" href="#/"><span class="logo">D</span> DyslexiaScreen</a>
+  <nav class="nav">
+    <a href="#/">Dashboard</a>
+    <a href="#/children">Children</a>
+    <a href="#/dataset">Dataset mode</a>
+    <a href="#/lab">Model Lab</a>
+    <a href="#/about">About</a>
+  </nav>
+  <div class="side-foot"><span id="who"></span><button class="btn ghost small" id="logout">Log out</button></div>
+</aside>
+<button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+<main id="view"></main>
+<div id="toast" class="toast" role="status"></div>
+<script src="/vendor/chart.umd.js"></script>
+<script src="/vendor/webgazer/webgazer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/game.js"></script>
+<script src="/js/hw.js"></script>
+<script src="/js/eye.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

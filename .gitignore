@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.db
+data/raw/
+data/hw/
+data/*.npy
+artifacts/*.keras
+artifacts/hw_test_probs.npy
+.env
