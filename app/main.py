@@ -52,6 +52,7 @@ class GameIn(BaseModel):
     child_id: int
     items: List[GameItem]
     duration_s: Optional[float] = None
+    seconds: int = 12
 
 
 class EyeIn(BaseModel):
@@ -169,7 +170,7 @@ def dashboard(user: User = Depends(current_user), db: Session = Depends(get_db))
 def game_predict(body: GameIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     from .ml import game
     c = child_of(user, body.child_id, db)
-    res = game.predict_from_items(c, [i.model_dump() for i in body.items])
+    res = game.predict_from_items(c, [i.model_dump() for i in body.items], body.seconds)
     a = save(db, c, "game", res["risk"], res["label"], {"input": body.model_dump(), "result": res})
     return {"assessment_id": a.id, **res}
 

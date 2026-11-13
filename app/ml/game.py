@@ -9,8 +9,11 @@ from game_features import engineered, items_to_row, RAW  # noqa: E402
 
 _b = None
 CUTOFF = 0.11
-NICE = {'letters': 'letter sounds', 'syllables': 'syllables', 'words': 'words', 'visual': 'visual search', 'pseudo': 'made-up words',
-        'spelling': 'spelling', 'building': 'word building', 'memory': 'memory', 'dictation': 'dictation'}
+NICE = {'letter': 'letter sounds', 'syllable': 'syllables', 'word': 'words', 'pairs': 'visual search', 'pseudo': 'made-up words',
+        'spelling': 'spelling', 'building': 'word building', 'memory': 'memory and dictation', 'total': 'whole test', 'overall': 'whole test'}
+SUFFIX = {'Clicks': 'taps', 'Hits': 'correct answers', 'Misses': 'mistakes', 'accuracy': 'accuracy', 'missrate': 'mistake rate'}
+SPECIAL = {'n_skipped': 'exercises skipped', 'n_low_accuracy': 'exercises below 50% accuracy', 'accuracy_spread': 'uneven accuracy across exercises',
+           'hits_per_year_of_age': 'correct answers for age', 'device_tablet': 'device'}
 
 
 def bundle():
@@ -21,15 +24,16 @@ def bundle():
 
 
 def label_of(name):
-    if name in ('Gender', 'Nativelang', 'Otherlang', 'Age', 'device_tablet'):
-        return {'Gender': 'gender', 'Nativelang': 'tested in first language', 'Otherlang': 'speaks another language',
-                'Age': 'age', 'device_tablet': 'device'}[name]
+    if name in SPECIAL:
+        return SPECIAL[name]
+    if name in ('Gender', 'Nativelang', 'Otherlang', 'Age'):
+        return {'Gender': 'gender', 'Nativelang': 'tested in first language', 'Otherlang': 'speaks another language', 'Age': 'age'}[name]
     for m in ['Clicks', 'Hits', 'Misses', 'Score', 'Accuracy', 'Missrate']:
         if name.startswith(m) and name[len(m):].isdigit():
-            return f'exercise {name[len(m):]}: {m.lower().replace("missrate", "miss rate")}'
-    g = name.split('_')[0]
+            return f'exercise {name[len(m):]}: ' + {'Clicks': 'taps', 'Hits': 'correct', 'Misses': 'mistakes', 'Score': 'score', 'Accuracy': 'accuracy', 'Missrate': 'mistake rate'}[m]
+    g, _, rest = name.partition('_')
     if g in NICE:
-        return f'{NICE[g]}: ' + {'acc': 'accuracy', 'miss': 'miss rate', 'hits': 'correct answers'}.get(name.split('_', 1)[1], name.split('_', 1)[1])
+        return f'{NICE[g]}: {SUFFIX.get(rest, rest)}'
     return name.replace('_', ' ')
 
 
@@ -62,8 +66,8 @@ def result(p, reasons, extra=None):
     return out
 
 
-def predict_from_items(child, items):
-    row = items_to_row(items, child.age, child.gender, child.native_speaker, child.other_language)
+def predict_from_items(child, items, seconds=12):
+    row = items_to_row(items, child.age, child.gender, child.native_speaker, child.other_language, seconds)
     p, reasons = score(vector(row))
     tot_c = sum(i['clicks'] for i in items); tot_h = sum(i['hits'] for i in items)
     summary = {'exercises': len(items), 'correct': int(tot_h), 'clicks': int(tot_c),

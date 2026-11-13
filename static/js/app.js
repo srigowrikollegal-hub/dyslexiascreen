@@ -144,7 +144,7 @@
         onProgress: (i, n) => $('#gBar').style.width = (100 * i / n) + '%',
         onDone: async (items, secs) => {
           $('#gBar').style.width = '100%'; $('#gRoot').innerHTML = '<div class="loading">Scoring the test…</div>';
-          try { const r = await API.post('/api/game/predict', { child_id: +id, items, duration_s: secs }); $('#gCard').classList.add('hidden'); gameResult($('#gResult'), r, id); }
+          try { const r = await API.post('/api/game/predict', { child_id: +id, items, duration_s: secs, seconds: +$('#gSecs').value }); $('#gCard').classList.add('hidden'); gameResult($('#gResult'), r, id); }
           catch (err) { $('#gRoot').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
         } });
       g.start();

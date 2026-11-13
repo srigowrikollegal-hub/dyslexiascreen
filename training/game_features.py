@@ -37,14 +37,51 @@ def engineered(row):
     return f
 
 
-def items_to_row(items, age, gender, native, other):
-    """Convert app game results (clicks, hits, misses per exercise) into the dataset's 196 raw fields."""
+# Maximum correct responses per exercise in the English web version (moles depend on time).
+HMAX = {**{q: 4 for q in range(5, 14)}, **{q: 5 for q in range(14, 18)}, **{q: 4 for q in range(18, 22)},
+        22: 4, 23: 4, 24: 3, 25: 3, 26: 4, 27: 15, 28: 10, 29: 6, 30: 11, 31: 4, 32: 4}
+CMAX = {31: 25, 32: 21}
+_EQ = None
+
+
+def _eq():
+    global _EQ
+    if _EQ is None:
+        import os, json
+        _EQ = {int(k): v for k, v in json.load(open(os.path.join(os.path.dirname(__file__), '..', 'artifacts', 'game_equating.json'))).items()}
+    return _EQ
+
+
+def _q(table, f):
+    """Quantile function from a 101-point table at fraction f in [0, 1]."""
+    f = min(max(f, 0.0), 1.0) * 100
+    lo = int(np.floor(f)); hi = min(lo + 1, 100)
+    return table[lo] + (table[hi] - table[lo]) * (f - lo)
+
+
+def _cdf(table, v):
+    return float(np.searchsorted(np.array(table), v, side='right')) / len(table)
+
+
+def items_to_row(items, age, gender, native, other, seconds=12):
+    """Equipercentile equating: each exercise's performance in the English web version is mapped to
+    the original test's scale (percentile of correct answers -> hits, percentile of miss rate -> misses)."""
+    eq = _eq()
     row = {'Gender': 1.0 if gender == 'male' else 0.0, 'Nativelang': 1.0 if native else 0.0,
            'Otherlang': 1.0 if other else 0.0, 'Age': float(age)}
     by = {int(i['q']): i for i in items}
     for q in range(1, 33):
         it = by.get(q, {'clicks': 0, 'hits': 0, 'misses': 0})
         c, h, m = float(it['clicks']), float(it['hits']), float(it['misses'])
-        row[f'Clicks{q}'] = c; row[f'Hits{q}'] = h; row[f'Misses{q}'] = m; row[f'Score{q}'] = h
-        row[f'Accuracy{q}'] = h / c if c else 0.0; row[f'Missrate{q}'] = m / c if c else 0.0
+        hmax = HMAX.get(q, max(round(0.55 * seconds), 1))
+        t = eq[q]
+        H = round(_q(t['hits'], h / hmax))
+        rate = m / max(c, 1.0) if q not in (31, 32) else m / max(h + m, 1.0)
+        M = round(_q(t['misses'], _cdf(t['missrate'], rate)))
+        if c == 0:
+            H = M = 0
+        cmax = CMAX.get(q, hmax * 1.3)
+        C = max(round(_q(t['clicks'], c / cmax)), H + M) if c else 0
+        row[f'Clicks{q}'] = float(C); row[f'Hits{q}'] = float(H); row[f'Misses{q}'] = float(M); row[f'Score{q}'] = float(H)
+        row[f'Accuracy{q}'] = H / C if C else 0.0; row[f'Missrate{q}'] = M / C if C else 0.0
     return row
