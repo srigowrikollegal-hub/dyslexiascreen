@@ -36,8 +36,8 @@
     <section class="auth">
       <div class="auth-art">
         <div class="brand big"><span class="logo">D</span> DyslexiaScreen</div>
-        <h1>Early reading-risk screening for children</h1>
-        <p>Three short activities (a letter game, handwriting and a reading task with eye tracking) combined into one Reading Difficulty Index with clear reasons.</p>
+        <h1>Every child deserves to <em>love reading</em></h1>
+        <p>Early dyslexia risk screening through three short activities: a letter game, handwriting and a reading task with eye tracking, combined into one Reading Difficulty Index with clear reasons.</p>
         <ul class="ticks"><li>12+ machine learning models compared in the Model Lab</li><li>Explanations for every result (SHAP, Grad-CAM, gaze maps)</li><li>Secure accounts, child profiles and printable reports</li></ul>
       </div>
       <form class="card auth-card" id="authForm">
