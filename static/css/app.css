@@ -188,7 +188,7 @@ body.eye-mode .side,body.eye-mode .menu-btn{display:none}
 .chart-box{position:relative;height:300px} .chart-box.tall{height:390px}
 .cm{border-collapse:separate;border-spacing:5px;margin:auto} .cm th{font-size:.8rem;color:var(--ink2);font-weight:500;padding:4px 8px}
 .cm td{background:rgba(106,75,239,calc(var(--a)*.85 + .04));color:var(--ink);text-align:center;padding:13px 16px;border-radius:12px;min-width:100px}
-.cm td.diag{color:#fff} .cm td b{display:block;font-family:var(--display);font-size:1.1rem} .cm td span{font-size:.8rem}
+.cm td.dark{color:#fff} .cm td b{display:block;font-family:var(--display);font-size:1.1rem} .cm td span{font-size:.8rem}
 
 /* ---------- report */
 .report{max-width:920px;background:#fff} .rep-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;margin-bottom:18px;border-bottom:3px solid transparent;border-image:var(--aurora) 1}

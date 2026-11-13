@@ -26,7 +26,7 @@ for k, name in [('game', 'Gamified test'), ('handwriting', 'Handwriting'), ('eye
     worst = min(o.items(), key=lambda t: t[1]['accuracy'])
     best_other_auc = max(o.items(), key=lambda t: t[1]['roc_auc'])
     rows.append(f"<tr><td><b>{name}</b><br><span class=m>{html.escape(n.replace(' (proposed)', ''))}</span></td><td>{pc(m['accuracy'])}</td><td>{m['roc_auc']:.3f}</td>"
-                f"<td>{(m.get('f1') or m.get('macro_f1')):.3f}</td><td>+{100 * (m['accuracy'] - avg):.1f} pts over the average of {len(o)} algorithms<br>"
+                f"<td>+{100 * (m['accuracy'] - avg):.1f} pts over the average of {len(o)} algorithms<br>"
                 f"+{100 * (m['accuracy'] - worst[1]['accuracy']):.1f} pts over {html.escape(worst[0])}</td></tr>")
 
 QA = [
@@ -47,6 +47,16 @@ QA = [
  ("What is novel in your work?", "One platform that combines three screening signals, explains every result, gives a single calibrated index, and compares 10+ algorithms per module in a live Model Lab, all running in a browser without special hardware."),
  ("Future work?", "Collect all three signals from the same children with a clinical diagnosis, learn the fusion weights from that data, add Kannada and Hindi versions of the test, and run a school pilot."),
 ]
+if gm:
+    c = gm['cutoffs']['0.11']
+    screen = (f"<p><b>Game at the referral cut-off (0.11), {gm['n']} held-out children never used in training:</b> "
+              f"catches {pc(c['sensitivity'])} of children with dyslexia (sensitivity) and correctly clears {pc(c['specificity'])} of typical readers (specificity); ROC-AUC {gm['roc_auc']:.3f}.</p>")
+    QA.insert(11, ("Why are recall and F1 for the game lower in the Model Lab?",
+                   f"The Model Lab uses the same 0.5 cut-off for every algorithm so the comparison is fair. Only about 1 in 10 children has dyslexia, so at 0.5 all models are cautious. "
+                   f"The app uses the screening cut-off 0.11, where on {gm['n']} held-out children it catches {pc(c['sensitivity'])} of children with dyslexia with {pc(c['specificity'])} specificity. "
+                   "For screening, ROC-AUC is the main measure because it does not depend on the cut-off."))
+else:
+    screen = ''
 qa = "".join(f"<div class=qa><b>{html.escape(q)}</b><p>{html.escape(a)}</p></div>" for q, a in QA)
 demo = [
  ("Open the site", f"Open <b>{html.escape(URL)}</b> and log in. Say: <i>“DyslexiaScreen screens children for dyslexia risk with three machine learning modules.”</i>"),
@@ -71,7 +81,7 @@ ol li{{margin-bottom:6px}} .qa{{margin-bottom:7px;page-break-inside:avoid}} .qa 
 <li>Plug in the Logitech webcam, clip it on top of the screen, sit facing a light. Turn the sound on.</li>
 <li>Log in. If the database is new, create the account again, add 2 children, and run all three modules on one of them so the report and dashboard have data.</li>
 <li>Open Model Lab once so all charts are loaded.</li></ol></div>
-<h2>Key results</h2><table><tr><th>Module (proposed model)</th><th>Accuracy</th><th>ROC-AUC</th><th>F1</th><th>Gain</th></tr>{''.join(rows)}</table>
+<h2>Key results</h2><table><tr><th>Module (proposed model)</th><th>Accuracy</th><th>ROC-AUC</th><th>Gain</th></tr>{''.join(rows)}</table>{screen}
 <h2>Demo flow (about 8 minutes)</h2><ol>{dm}</ol>
 <h2>Likely viva questions</h2>{qa}
 <h2>If something goes wrong</h2><ul><li><b>Site slow to open:</b> wait one minute; the server is waking up.</li><li><b>Camera not found:</b> close other apps using the camera (Zoom, Teams), reload, allow camera in Chrome's address bar.</li>

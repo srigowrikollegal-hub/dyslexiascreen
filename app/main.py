@@ -239,6 +239,9 @@ def lab():
         p = os.path.join(ART, f"lab_{k}.json")
         if os.path.exists(p):
             out[k] = json.load(open(p))
+    h = os.path.join(ART, "game_heldout.json")
+    if "game" in out and os.path.exists(h):
+        out["game"]["heldout"] = json.load(open(h))
     return out
 
 

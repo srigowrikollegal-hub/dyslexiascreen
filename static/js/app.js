@@ -294,14 +294,16 @@
       const d = L[k], ms = Object.entries(d.models).sort((a, b) => (b[1].roc_auc || 0) - (a[1].roc_auc || 0));
       const prop = ms.find(([n]) => /proposed/i.test(n)) || ms[0];
       const others = ms.filter(m => m !== prop);
+      const hc = d.heldout && d.heldout.cutoffs['0.11'];
       const bestOther = Math.max(...others.map(m => m[1].roc_auc || 0)), meanOther = others.reduce((s, m) => s + (m[1].accuracy || 0), 0) / others.length;
       $('#labPane').innerHTML = `<p class="muted">${esc(d.dataset)}${d.cv ? ' · ' + esc(d.cv) : ''}</p>
         <div class="stats"><div class="stat hl"><b>${pct(prop[1].accuracy)}</b><span>Accuracy (proposed)</span></div><div class="stat hl"><b>${(prop[1].roc_auc).toFixed(3)}</b><span>ROC-AUC (proposed)</span></div>
-          <div class="stat"><b>${(prop[1].f1 ?? prop[1].macro_f1).toFixed(3)}</b><span>F1 score</span></div><div class="stat"><b>+${(100 * (prop[1].accuracy - meanOther)).toFixed(1)} pts</b><span>Accuracy over the average of ${others.length} other algorithms</span></div></div>
+          ${hc ? `<div class="stat"><b>${pct(hc.sensitivity)}</b><span>Children with dyslexia caught at the screening cut-off (${d.heldout.n} held-out children)</span></div>` : `<div class="stat"><b>${(prop[1].f1 ?? prop[1].macro_f1).toFixed(3)}</b><span>F1 score</span></div>`}<div class="stat"><b>+${(100 * (prop[1].accuracy - meanOther)).toFixed(1)} pts</b><span>Accuracy over the average of ${others.length} other algorithms</span></div></div>
         <section class="card"><h2>All algorithms</h2><div class="tbl-wrap"><table class="tbl lab"><thead><tr><th>Algorithm</th><th>Accuracy</th><th>ROC-AUC</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead><tbody>
           ${ms.map(([n, m]) => `<tr class="${m === prop[1] ? 'prop' : ''}"><td>${esc(n)}</td><td>${pct(m.accuracy)}</td><td>${m.roc_auc.toFixed(3)}</td><td>${(m.precision).toFixed(3)}</td><td>${(m.recall).toFixed(3)}</td><td>${(m.f1 ?? m.macro_f1).toFixed(3)}</td></tr>`).join('')}</tbody></table></div></section>
         <div class="grid2"><section class="card"><h2>Accuracy and ROC-AUC</h2><div class="chart-box tall"><canvas id="chBar"></canvas></div></section>
           <section class="card"><h2>${prop[1].roc ? 'ROC curves' : 'Confusion matrix (proposed)'}</h2><div class="chart-box tall">${prop[1].roc ? '<canvas id="chRoc"></canvas>' : confusion(prop[1].confusion, d.classes)}</div></section></div>
+        ${hc ? `<section class="card"><h2>Screening on ${d.heldout.n} held-out children (cut-off 0.11, as used in the app)</h2><p class="muted">Sensitivity ${pct(hc.sensitivity)} · specificity ${pct(hc.specificity)} · ROC-AUC ${d.heldout.roc_auc.toFixed(3)}. These children were never used for training.</p>${confusion(hc.confusion, ['No dyslexia', 'Dyslexia'])}</section>` : ''}
         ${prop[1].roc ? `<section class="card"><h2>Confusion matrix (proposed, threshold ${prop[1].threshold})</h2>${confusion(prop[1].confusion, ['No dyslexia', 'Dyslexia'])}</section>` : ''}`;
       const css = getComputedStyle(document.documentElement), C1 = css.getPropertyValue('--accent').trim() || '#3b5bdb', C2 = css.getPropertyValue('--accent2').trim() || '#f08c00', MUTE = css.getPropertyValue('--mute').trim() || '#999';
       Chart.defaults.font.family = getComputedStyle(document.body).fontFamily; Chart.defaults.color = css.getPropertyValue('--ink2').trim() || '#555';
@@ -318,7 +320,7 @@
   }
   function confusion(M, labels) {
     labels = labels || M.map((_, i) => 'Class ' + i); const rs = M.map(r => r.reduce((a, b) => a + b, 0));
-    return `<table class="cm"><thead><tr><th>True \\ Predicted</th>${labels.map(l => `<th>${esc(l)}</th>`).join('')}</tr></thead><tbody>${M.map((r, i) => `<tr><th>${esc(labels[i])}</th>${r.map((v, j) => `<td style="--a:${(v / rs[i]).toFixed(3)}" class="${i === j ? 'diag' : ''}"><b>${v.toLocaleString()}</b><span>${pct(v / rs[i])}</span></td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    return `<table class="cm"><thead><tr><th>True \\ Predicted</th>${labels.map(l => `<th>${esc(l)}</th>`).join('')}</tr></thead><tbody>${M.map((r, i) => `<tr><th>${esc(labels[i])}</th>${r.map((v, j) => `<td style="--a:${(v / rs[i]).toFixed(3)}" class="${v / rs[i] > 0.45 ? 'dark' : ''}"><b>${v.toLocaleString()}</b><span>${pct(v / rs[i])}</span></td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
 
   // ---------------------------------------------------------------- about
