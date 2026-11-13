@@ -7,3 +7,4 @@ data/*.npy
 artifacts/*.keras
 artifacts/hw_test_probs.npy
 .env
+data/hw_meta.csv
