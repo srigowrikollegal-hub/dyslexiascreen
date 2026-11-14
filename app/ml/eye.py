@@ -99,6 +99,18 @@ def task_measures(samples, boxes):
     return m, summary, fx
 
 
+TASK_NAME = {'Syl': 'Syllables', 'Mean': 'Story', 'Pseudo': 'Made-up words'}
+MEAS_NAME = {'aoi_dwell_mean': 'looking time per word', 'time_per_word': 'reading speed (time per word)', 'aoi_nfix_mean': 'fixations per word',
+             'aoi_skip_rate': 'words skipped', 'aoi_first_fix_dur_mean': 'first look per word', 'aoi_revisits_mean': 'returns to a word',
+             'aoi_reread_mean': 're-reading time', 'mean_fix_dur': 'mean fixation', 'fix_dur_median': 'median fixation',
+             'ratio_progress_regress': 'forward/backward ratio', 'regress_per_fix': 'backward jumps'}
+
+
+def nice(feature):
+    t, _, m = feature.partition('_')
+    return f"{TASK_NAME.get(t, t)}: {MEAS_NAME.get(m, m.replace('_', ' '))}"
+
+
 def analyse(tasks):
     """tasks: {'syllables'|'passage'|'pseudo': {'samples': [[t,x,y],...], 'boxes': [...]}}"""
     b = bundle(); feats = dict(b['feature_means'])
@@ -125,5 +137,5 @@ def analyse(tasks):
     scaler, lr = base[0], base[-1]
     z = scaler.transform(x)[0]; contrib = lr.coef_[0] * z
     order = np.argsort(-np.abs(contrib))[:6]
-    reasons = [{'feature': b['features'][i], 'effect': float(contrib[i])} for i in order]
+    reasons = [{'feature': b['features'][i], 'label': nice(b['features'][i]), 'effect': float(contrib[i])} for i in order]
     return {'risk': p, 'tasks': out, 'reasons': reasons}

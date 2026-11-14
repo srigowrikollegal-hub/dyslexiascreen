@@ -88,7 +88,7 @@
   async function dashboard() {
     const d = await API.get('/api/dashboard');
     view().innerHTML = `
-      <header class="page-head"><div><h1>Hello, ${esc(USER.name.split(' ')[0])}</h1><p class="muted">Here is your screening overview.</p></div>
+      <header class="page-head"><div><h1>Hello, ${esc(USER.name)}</h1><p class="muted">Here is your screening overview.</p></div>
         <a class="btn" href="#/children/new">Add a child</a></header>
       <div class="stats">
         <div class="stat"><b>${d.children}</b><span>Children</span></div>
